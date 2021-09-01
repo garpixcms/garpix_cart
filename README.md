@@ -1,48 +1,123 @@
-# GarpixCMS Empty Template
+# Garpix Cart
 
-Cookiecutter template for GarpixCMS == 1.0.0.
 
-## Install
+User Cart module for Django/DRF projects. Part of GarpixCMS.
 
-1. Install Docker and docker-compose.
-   
-For Debian, Ubuntu:
+## Quickstart
 
-```
-su
-apt update; apt upgrade -y; apt install -y curl; curl -sSL https://get.docker.com/ | sh; curl -L https://github.com/docker/compose/releases/download/1.28.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
-```
+Install with pip 
 
-Don't forget press CTRL+D to exit from super user account.
+    $ pip install garpix_cart
 
-2. Apply environment variables:
+Add the `garpix_cart` to your INSTALLED_APPS:
 
-```
-cp example.env .env
-```
+```python
+# settings.py
 
-3. Change a random string for `SECRET_KEY` and `POSTGRES_PASSWORD` in `.env`.
-
-4. Install dependencies:
-
-```
-pipenv install
-pipenv shell
+INSTALLED_APPS = [
+    # ...
+    'garpix_cart',
+]
 ```
 
-5. Up docker-compose, migrate database and create super user:
+Make migrations and migrate database:
+
+    $ ./manage.py makemigrations
+    $ ./manage.py migrate
+
+Add to `urls.py`:
 
 ```
-docker-compose up -d
-python3 backend/manage.py makemigrations
-python3 backend/manage.py migrate
-python3 backend/manage.py createsuperuser
+urlpatterns = [
+    # ...
+    path('', include('garpix_cart.urls'))
+]
 ```
 
-6. Run the server:
+### Customize
+
+By default, you will see in `settings.py`:
 
 ```
-python3 backend/manage.py runserver
+GARPIX_CART_SESSION_KEY = 'cart' # cart session key 
+
+GARPIX_CART_MIXIN = 'garpix_cart.mixins.CartMixin' # base Cart mixin to model
+GARPIX_CART_SESSION_CLASS = 'garpix_cart.base.BaseCartSession' # base cart session core
+GARPIX_CART_SESSION_HANDLER_CLASS = 'garpix_cart.base.BaseCartHandler' # base cart handler, which inherit all handlers
 ```
 
-7. Enjoy!
+#### Easy way to customize
+
+For example, we want to have our own BaseCartHandler:
+
+1) override as needed;
+
+```
+# base.py
+
+from garpix_cart.base import BaseCartHandler
+
+
+class CustomHandler(BaseCartHandler):
+    def validate(self, products) -> List[Dict[str, Any]]:
+        return products
+```
+
+Where `products` is received data from request
+
+2) Change handler in `settings.py`;
+
+```
+# settings.py
+
+GARPIX_CART_SESSION_HANDLER_CLASS = 'app.base.CustomHandler'
+```
+
+3) This work fine!
+
+
+#### The hard way to customize
+
+1) Create your class inherited from abstract;
+
+```
+# base.py
+
+from garpix_cart.abstracts import AbstractCartHandler
+
+
+class CustomHandler(AbstractCartHandler):
+    def validate(self, products) -> List[Dict[str, Any]]:
+        # method validates the data from the request
+        
+        ...
+
+    def is_valid(self, products) -> bool:
+        # check data is valid
+
+        ...
+    
+    def make(self, products) -> bool:
+        # make if data is valid
+        # always returns modify_session() from CartSession class
+    
+        ...
+
+    def error_log(self, products) -> Optional[str]:
+        # get errors if they raises
+    
+        ...
+``` 
+
+2) Change handler in `settings.py`;
+
+```
+# settings.py
+
+GARPIX_CART_SESSION_HANDLER_CLASS = 'app.base.CustomHandler'
+```
+
+3) This work fine!
+
+
+Developed by Garpix / [https://garpix.com](https://garpix.com)

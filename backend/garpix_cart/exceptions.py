@@ -1,0 +1,2 @@
+class CartError(Exception):
+    pass
