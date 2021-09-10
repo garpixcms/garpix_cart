@@ -8,6 +8,7 @@ django = "==3.1"
 drf-yasg  = "==1.20.0"
 environs = "*"
 psycopg2-binary = "*"
+celery = ">=4.4.2"
 
 [dev-packages]
 
