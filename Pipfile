@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 django = "==3.1"
 drf-yasg  = "==1.20.0"
+environs = "*"
 
 [dev-packages]
 
