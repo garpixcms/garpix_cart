@@ -1,5 +1,9 @@
+import uuid
+from typing import Optional
+
 from django.conf import settings
 from django.utils.module_loading import import_string
+from django.contrib.auth import get_user_model
 
 from rest_framework import parsers
 from rest_framework import permissions
@@ -11,20 +15,58 @@ from rest_framework.response import Response
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
-from ..models import CartItem
-from ..serializers import CartItemSerializer
+from ..models import CartItem, Customer
+from ..serializers import CartItemSerializer, CustomerSerializer
+
 
 CartSession = import_string(settings.GARPIX_CART_SESSION_CLASS)
+CART_SESSION_KEY = settings.GARPIX_CART_SESSION_KEY
 
 
 class CartView(viewsets.ViewSet):
     parser_classes = (parsers.JSONParser,)
     permission_classes = (permissions.IsAuthenticated,)
 
+    def get_customer(self) -> Optional[Customer]:
+        return Customer.get_from_request(self.request)
+
+    def get_or_create_customer(self, session=False):
+        # TODO перенести в модель
+        customer = self.get_customer()
+        if customer is not None:
+            return customer
+
+        if self.request.user.is_authenticated:
+            user = get_user_model().objects.get(pk=self.request.user.pk)
+            return Customer.objects.create(
+                user=user,
+                recognized=Customer.CustomerState.REGISTERED
+            )
+
+        if session is True:
+            token = self.request.session.session_key
+            return Customer.objects.create(
+                number=token,
+                recognized=Customer.CustomerState.GUEST
+            )
+
+        return Customer.objects.create(
+            number=uuid.uuid4(),
+            recognized=Customer.CustomerState.GUEST
+        )
+
+    def get_cartitems(self):
+        customer = self.get_customer()
+        CartItem.objects.filter(customer=customer)
+
     def list(self, request):
-        user = request.user
-        cart_items = CartItem.objects.filter(user=user)
-        return Response(CartItemSerializer(cart_items, many=True).data)
+        return Response(CartItemSerializer(self.get_cartitems(), many=True).data)
+
+    @action(detail=False, methods=['get'], permission_classes=(permissions.AllowAny,))
+    def create_customer(self, request):
+        return Response({
+            'customer': CustomerSerializer(self.get_or_create_customer()).data
+        }, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
         request_body=openapi.Schema(

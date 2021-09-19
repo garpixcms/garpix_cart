@@ -89,3 +89,25 @@ class CartViewTestCase(TestCase):
 
         obj = CartItem.objects.get(pk=cart_item.pk)
         self.assertEqual(obj.count, product_count)
+
+    def test_create_customer_user(self):
+        response = self.client.get(
+            '/api/v1/cart/create_customer/',
+            format='json',
+            HTTP_ACCEPT='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['customer']['user'], self.user.pk)
+
+    def test_create_customer_token(self):
+        client = APIClient()
+        response = client.get(
+            '/api/v1/cart/create_customer/',
+            format='json',
+            HTTP_ACCEPT='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['customer']['user'], None)
+        self.assertNotEqual(response.data['customer']['number'], None)
