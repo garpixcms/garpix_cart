@@ -16,6 +16,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from ..models import CartItem, Customer
+from ..permissions import IsCustomer
 from ..serializers import CartItemSerializer, CustomerSerializer
 
 
@@ -92,24 +93,24 @@ class CartView(viewsets.ViewSet):
             }
         )
     )
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], permission_classes=(IsCustomer,))
     def add(self, request):
-        user = request.user
+        customer = self.get_customer()
+        data = request.data.get('data', None)
 
-        if request.data is not None and isinstance(request.data, dict):
-            if data := request.data.get('data', None):
-                elements = []
-                for item in data:
-                    elements.append(CartItem(
-                        user=user,
-                        **item
-                    ))
+        if data is not None:
+            elements = []
+            for item in data:
+                elements.append(CartItem(
+                    customer=customer,
+                    **item
+                ))
 
-                CartItem.objects.bulk_create(elements)
+            CartItem.objects.bulk_create(elements)
 
-                return Response({
-                    'status': 'ok'
-                }, status=status.HTTP_200_OK)
+            return Response({
+                'status': 'ok'
+            }, status=status.HTTP_200_OK)
 
         return Response(
             {'server': 'Request "data" must be dict.'}, status=status.HTTP_400_BAD_REQUEST
@@ -127,13 +128,13 @@ class CartView(viewsets.ViewSet):
             }
         )
     )
-    @action(detail=False, methods=['delete'])
+    @action(detail=False, methods=['delete'], permission_classes=(IsCustomer,))
     def remove(self, request):
-        user = request.user
+        customer = self.get_customer()
 
         data = request.data.get('data')
 
-        CartItem.objects.filter(user=user, pk__in=data).delete()
+        CartItem.objects.filter(customer=customer, pk__in=data).delete()
 
         return Response({
             'status': 'ok'
@@ -193,9 +194,9 @@ class CartView(viewsets.ViewSet):
         )
 
     def partial_update(self, request, pk=None):
-        user = request.user
+        customer = self.get_customer()
 
-        cart_item = CartItem.objects.filter(user=user, pk=pk)
+        cart_item = CartItem.objects.filter(customer=customer, pk=pk)
 
         if cart_item.count() == 0:
             return Response(status=status.HTTP_404_NOT_FOUND)

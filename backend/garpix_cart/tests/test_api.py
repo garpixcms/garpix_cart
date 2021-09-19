@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 
 from rest_framework.test import APIClient
 
-from ..models import CartItem
+from ..models import CartItem, Customer
 
 
 class CartViewTestCase(TestCase):
@@ -12,6 +12,7 @@ class CartViewTestCase(TestCase):
         self.username = 'testuser1'
         self.password = '12345'
         self.user = User.objects.create_user(username=self.username, password=self.password)
+        self.customer = Customer.objects.create(user=self.user, recognized=Customer.CustomerState.REGISTERED)
         self.user.save()
         client = APIClient()
         client.force_authenticate(user=self.user)
@@ -44,7 +45,7 @@ class CartViewTestCase(TestCase):
             product=1,
             count=1,
             params=dict(),
-            user=self.user
+            customer=self.customer
         )
         cart_item.save()
 
@@ -70,7 +71,7 @@ class CartViewTestCase(TestCase):
             product=1,
             count=1,
             params=dict(),
-            user=self.user
+            customer=self.customer
         )
         cart_item.save()
 
