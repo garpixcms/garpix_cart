@@ -1,6 +1,7 @@
 from rest_framework import permissions
 from ..models import Customer
 
+
 class IsCustomer(permissions.BasePermission):
     message = 'Adding customers not allowed.'
 

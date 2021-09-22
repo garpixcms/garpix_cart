@@ -40,6 +40,28 @@ class CartViewTestCase(TestCase):
         count = CartItem.objects.all().count()
         self.assertEqual(count, 1)
 
+    def test_session_add(self):
+        response = self.client.post(
+            '/api/v1/cart/session_add/',
+            {
+                'data': [
+                    {
+                        'product': 1,
+                        'count': 1,
+                        'params': {
+                            'color': '#000000'
+                        }
+                    }
+                ]
+            },
+            format='json',
+            HTTP_ACCEPT='application/json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        count = CartItem.objects.all().count()
+        self.assertEqual(count, 1)
+
     def test_remove(self):
         cart_item = CartItem(
             product=1,
@@ -51,6 +73,31 @@ class CartViewTestCase(TestCase):
 
         response = self.client.delete(
             '/api/v1/cart/remove/',
+            {
+                'data': [
+                    cart_item.pk
+                ]
+            },
+            format='json',
+            HTTP_ACCEPT='application/json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        count = CartItem.objects.all().count()
+        self.assertEqual(count, 0)
+
+    def test_session_remove(self):
+        cart_item = CartItem(
+            product=1,
+            count=1,
+            params=dict(),
+            customer=self.customer
+        )
+        cart_item.save()
+
+        response = self.client.delete(
+            '/api/v1/cart/session_remove/',
             {
                 'data': [
                     cart_item.pk

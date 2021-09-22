@@ -20,10 +20,6 @@ from ..permissions import IsCustomer
 from ..serializers import CartItemSerializer, CustomerSerializer
 
 
-CartSession = import_string(settings.GARPIX_CART_SESSION_CLASS)
-CART_SESSION_KEY = settings.GARPIX_CART_SESSION_KEY
-
-
 class CartView(viewsets.ViewSet):
     parser_classes = (parsers.JSONParser,)
     permission_classes = (permissions.IsAuthenticated,)
@@ -60,10 +56,25 @@ class CartView(viewsets.ViewSet):
         customer = self.get_customer()
         CartItem.objects.filter(customer=customer)
 
+    def create_cart_items(self, customer, data):
+        elements = []
+        for item in data:
+            elements.append(CartItem(
+                customer=customer,
+                **item
+            ))
+
+        CartItem.objects.bulk_create(elements)
+
+    def remove_cart_items(self, data):
+        customer = self.get_customer()
+        print(customer, 'customer remove_cart_items')
+        CartItem.objects.filter(customer=customer, pk__in=data).delete()
+
     def list(self, request):
         return Response(CartItemSerializer(self.get_cartitems(), many=True).data)
 
-    @action(detail=False, methods=['get'], permission_classes=(permissions.AllowAny,))
+    @action(detail=False, methods=['GET'], permission_classes=(permissions.AllowAny,))
     def create_customer(self, request):
         return Response({
             'customer': CustomerSerializer(self.get_or_create_customer()).data
@@ -93,20 +104,13 @@ class CartView(viewsets.ViewSet):
             }
         )
     )
-    @action(detail=False, methods=['post'], permission_classes=(IsCustomer,))
+    @action(detail=False, methods=['POST'], permission_classes=(IsCustomer,))
     def add(self, request):
         customer = self.get_customer()
         data = request.data.get('data', None)
 
         if data is not None:
-            elements = []
-            for item in data:
-                elements.append(CartItem(
-                    customer=customer,
-                    **item
-                ))
-
-            CartItem.objects.bulk_create(elements)
+            self.create_cart_items(customer=customer, data=data)
 
             return Response({
                 'status': 'ok'
@@ -128,69 +132,42 @@ class CartView(viewsets.ViewSet):
             }
         )
     )
-    @action(detail=False, methods=['delete'], permission_classes=(IsCustomer,))
+    @action(detail=False, methods=['DELETE'], permission_classes=(IsCustomer,))
     def remove(self, request):
-        customer = self.get_customer()
-
         data = request.data.get('data')
-
-        CartItem.objects.filter(customer=customer, pk__in=data).delete()
-
+        self.remove_cart_items(data)
         return Response({
             'status': 'ok'
         }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['GET'], permission_classes=(permissions.AllowAny,))
     def session_list(self, request):
-        base_cart_session = CartSession(request.session)
-
         return Response(
-            base_cart_session.list(), status=status.HTTP_200_OK
+            self.get_cartitems(), status=status.HTTP_200_OK
         )
 
-    @action(detail=False, methods=['POST'], permission_classes=(permissions.AllowAny,))
+    @action(detail=False, methods=['DELETE'], permission_classes=(IsCustomer,))
     def session_remove(self, request):
-        data = request.data.get('data', None)
-        base_cart_session = CartSession(request.session)
-
-        if base_cart_session.remove.is_valid(data):
-            base_cart_session.remove.make(data)
-
-            return Response(
-                {'server': 'Product removed successfully.'}, status=status.HTTP_200_OK
-            )
-
-        return Response(
-            {'server': base_cart_session.remove.error_log(data)}, status=status.HTTP_400_BAD_REQUEST
-        )
+        data = request.data.get('data')
+        self.remove_cart_items(data)
+        return Response({
+            'status': 'ok'
+        }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['POST'], permission_classes=(permissions.AllowAny,))
     def session_add(self, request):
-        """
-        {
-            "data":
-            [
-                {
-                    "product": "1",
-                    "params": "data",
-                    "count": "1"
-                }
-            ]
-        }
-        """
-
+        customer = self.get_or_create_customer(session=True)
         data = request.data.get('data', None)
-        base_cart_session = CartSession(request.session)
 
-        if base_cart_session.add.is_valid(data):
-            base_cart_session.add.make(data)
+        if data is not None:
+            self.create_cart_items(customer=customer, data=data)
 
             return Response(
                 {'server': 'Product added successfully.'}, status=status.HTTP_200_OK
             )
 
         return Response(
-            {'server': base_cart_session.add.error_log(data)}, status=status.HTTP_400_BAD_REQUEST
+            {'error': 'Data not valid'}, status=status.HTTP_400_BAD_REQUEST
         )
 
     def partial_update(self, request, pk=None):

@@ -7,8 +7,6 @@ INSTALLED_APPS += [
 GARPIX_CART_SESSION_KEY = 'cart'
 
 GARPIX_CART_MIXIN = 'garpix_cart.mixins.CartMixin'
-GARPIX_CART_SESSION_CLASS = 'garpix_cart.base.BaseCartSession'
-GARPIX_CART_SESSION_HANDLER_CLASS = 'garpix_cart.base.BaseCartHandler'
 
 MIGRATION_MODULES.update({
     'garpix_cart': 'app.migrations.garpix_cart',
