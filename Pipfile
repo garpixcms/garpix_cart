@@ -4,8 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-django = "==3.1"
-drf-yasg  = "==1.20.0"
+django = ">=3.1"
+drf-spectacular = ">=0.18.2"
 environs = "*"
 psycopg2-binary = "*"
 celery = ">=4.4.2"
