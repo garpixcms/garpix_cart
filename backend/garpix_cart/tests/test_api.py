@@ -139,7 +139,7 @@ class CartViewTestCase(TestCase):
         self.assertEqual(obj.count, product_count)
 
     def test_create_customer_user(self):
-        response = self.client.get(
+        response = self.client.post(
             '/api/v1/cart/create_customer/',
             format='json',
             HTTP_ACCEPT='application/json',

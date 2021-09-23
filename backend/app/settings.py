@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'drf_spectacular',
     'app',
     'garpix_cart',
 ]
@@ -65,7 +66,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'garpix_menu.context_processors.menu_processor',
             ],
         },
     },
@@ -145,6 +145,16 @@ GARPIX_CART_SESSION_KEY = 'cart'
 
 GARPIX_CART_MIXIN = 'garpix_cart.mixins.CartMixin'
 
-MIGRATION_MODULES.update({
+MIGRATION_MODULES = {
     'garpix_cart': 'app.migrations.garpix_cart',
-})
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Garpix cart API',
+    'DESCRIPTION': '',
+    'VERSION': '2.0.0',
+}

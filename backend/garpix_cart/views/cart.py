@@ -1,8 +1,6 @@
 import uuid
 from typing import Optional
 
-from django.conf import settings
-from django.utils.module_loading import import_string
 from django.contrib.auth import get_user_model
 
 from rest_framework import parsers
@@ -11,9 +9,6 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
 
 from ..models import CartItem, Customer
 from ..permissions import IsCustomer
@@ -28,29 +23,7 @@ class CartView(viewsets.ViewSet):
         return Customer.get_from_request(self.request)
 
     def get_or_create_customer(self, session=False):
-        # TODO перенести в модель
-        customer = self.get_customer()
-        if customer is not None:
-            return customer
-
-        if self.request.user.is_authenticated:
-            user = get_user_model().objects.get(pk=self.request.user.pk)
-            return Customer.objects.create(
-                user=user,
-                recognized=Customer.CustomerState.REGISTERED
-            )
-
-        if session is True:
-            token = self.request.session.session_key
-            return Customer.objects.create(
-                number=token,
-                recognized=Customer.CustomerState.GUEST
-            )
-
-        return Customer.objects.create(
-            number=uuid.uuid4(),
-            recognized=Customer.CustomerState.GUEST
-        )
+        return Customer.get_or_create_customer(request=self.request, session=session)
 
     def get_cartitems(self):
         customer = self.get_customer()
@@ -68,42 +41,17 @@ class CartView(viewsets.ViewSet):
 
     def remove_cart_items(self, data):
         customer = self.get_customer()
-        print(customer, 'customer remove_cart_items')
         CartItem.objects.filter(customer=customer, pk__in=data).delete()
 
     def list(self, request):
         return Response(CartItemSerializer(self.get_cartitems(), many=True).data)
 
-    @action(detail=False, methods=['GET'], permission_classes=(permissions.AllowAny,))
+    @action(detail=False, methods=['POST'], permission_classes=(permissions.AllowAny,))
     def create_customer(self, request):
         return Response({
             'customer': CustomerSerializer(self.get_or_create_customer()).data
         }, status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'data': openapi.Schema(
-                    type=openapi.TYPE_ARRAY, description='Массив с данными',
-                    items=openapi.Schema(
-                        type=openapi.TYPE_OBJECT,
-                        properties={
-                            'product': openapi.Schema(
-                                type=openapi.TYPE_INTEGER, description='ID продукта',
-                            ),
-                            'count': openapi.Schema(
-                                type=openapi.TYPE_INTEGER, description='Количество',
-                            ),
-                            'params': openapi.Schema(
-                                type=openapi.TYPE_OBJECT, description='Дополнительные параметры',
-                            )
-                        }
-                    )
-                )
-            }
-        )
-    )
     @action(detail=False, methods=['POST'], permission_classes=(IsCustomer,))
     def add(self, request):
         customer = self.get_customer()
@@ -120,18 +68,6 @@ class CartView(viewsets.ViewSet):
             {'server': 'Request "data" must be dict.'}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'data': openapi.Schema(
-                    description='ID корзины',
-                    type=openapi.TYPE_ARRAY,
-                    items=openapi.Schema(type=openapi.TYPE_INTEGER)
-                )
-            }
-        )
-    )
     @action(detail=False, methods=['DELETE'], permission_classes=(IsCustomer,))
     def remove(self, request):
         data = request.data.get('data')
