@@ -7,9 +7,9 @@ from django.contrib.auth import get_user_model
 
 class Customer(models.Model):
     class CustomerState(models.IntegerChoices):
-        UNRECOGNIZED = 0, 'Неопознанный'
-        GUEST = 1, 'Гость'
-        REGISTERED = 2, 'Зарегистрированный'
+        UNRECOGNIZED = (0, 'Неопознанный')
+        GUEST = (1, 'Гость')
+        REGISTERED = (2, 'Зарегистрированный')
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
