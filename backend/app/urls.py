@@ -1,6 +1,7 @@
 from django.urls import path, re_path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from django.conf import settings
+from django.contrib import admin
 
 
 urlpatterns = []
@@ -12,4 +13,7 @@ if settings.DEBUG:
         re_path(r'^api/v1/redoc/$', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     ]
 
-urlpatterns += [path('api/v1/', include('garpix_cart.urls'))]
+urlpatterns += [
+    path('admin/', admin.site.urls),
+    path('api/v1/', include('garpix_cart.urls'))
+]
