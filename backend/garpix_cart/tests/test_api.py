@@ -150,7 +150,7 @@ class CartViewTestCase(TestCase):
 
     def test_create_customer_token(self):
         client = APIClient()
-        response = client.get(
+        response = client.post(
             '/api/v1/cart/create_customer/',
             format='json',
             HTTP_ACCEPT='application/json',

@@ -9,6 +9,8 @@ drf-spectacular = ">=0.18.2"
 environs = "*"
 psycopg2-binary = "*"
 celery = ">=4.4.2"
+garpix-qa = "*"
+garpix-package = "*"
 
 [dev-packages]
 

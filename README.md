@@ -1,8 +1,5 @@
 # Garpix Cart
 
-
-User Cart module for Django/DRF projects. Part of GarpixCMS.
-
 ## Quickstart
 
 Install with pip 
