@@ -4,4 +4,4 @@ from .views import CartView
 
 router = DefaultRouter()
 
-router.register(r'cart_items', CartView, basename='cart-items')
+router.register(r'cart', CartView, basename='cart')
