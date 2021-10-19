@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'app',
     'garpix_cart',
+    'garpix_qa',
+    'garpix_package',
 ]
 
 MIDDLEWARE = [
