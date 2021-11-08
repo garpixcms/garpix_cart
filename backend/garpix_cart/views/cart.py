@@ -1,8 +1,4 @@
-import uuid
 from typing import Optional
-
-from django.contrib.auth import get_user_model
-
 from rest_framework import parsers
 from rest_framework import permissions
 from rest_framework import status
