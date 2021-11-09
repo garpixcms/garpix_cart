@@ -23,7 +23,7 @@ class CartView(viewsets.ViewSet):
 
     def get_cartitems(self):
         customer = self.get_customer()
-        CartItem.objects.filter(customer=customer)
+        return CartItem.objects.filter(customer=customer)
 
     def create_cart_items(self, customer, data):
         elements = []

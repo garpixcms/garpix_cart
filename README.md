@@ -31,90 +31,29 @@ urlpatterns = [
 ]
 ```
 
-### Customize
+В интернет магазине обычно посетитель начинает искать интересные товары, надеясь добавить несколько из них в свою корзину. 
+Затем по пути к оформлению заказа они решают, создать ли учетную запись пользователя, использовать существующую или продолжить работу в качестве гостя. 
+Здесь все усложняется.
 
-By default, you will see in `settings.py`:
+Во-первых, для неаутентифицированных посетителей сайта корзина никому не принадлежит. Но каждая корзина должна быть 
+связана с ее текущим посетителем сайта.
 
-```
-GARPIX_CART_SESSION_KEY = 'cart' # cart session key 
+Во-вторых, когда корзина преобразована в заказ, но посетитель хочет продолжить работу в качестве гостя, этот объект заказа 
+должен ссылаться на объект пользователя в базе данных. 
+Такие пользователи будут рассматриваться как фальшивые: не могут войти в систему, сбросить пароль и т.д. 
+Единственная информация, которую необходимо сохранить для такого фальшивого пользователя это их адрес электронной почты, 
+иначе они не смогут быть проинформированы, когда бы ни состояние их порядок меняется.
 
-GARPIX_CART_MIXIN = 'garpix_cart.mixins.CartMixin' # base Cart mixin to model
-GARPIX_CART_SESSION_CLASS = 'garpix_cart.base.BaseCartSession' # base cart session core
-GARPIX_CART_SESSION_HANDLER_CLASS = 'garpix_cart.base.BaseCartHandler' # base cart handler, which inherit all handlers
-```
+Django явно не разрешает использование таких пользовательских объектов в своих моделях баз данных. 
+Но, используя логический флаг is_active, мы можем обмануть приложение, чтобы оно интерпретировало такого гостя как 
+фальшивого анонимного пользователя.
 
-#### Easy way to customize
+Такой подход неприменим для всех приложений на основе Django, добавляется новая модель - **Customer**
 
-For example, we want to have our own BaseCartHandler:
+## Получить Customer
 
-1) override as needed;
+Для создания Customer нужно сделать `POST` запрос на `/api/v1/cart/create_customer/`
 
-```
-# base.py
+Запрос вернет объект `Customer` с полем `number`.
 
-from garpix_cart.base import BaseCartHandler
-
-
-class CustomHandler(BaseCartHandler):
-    def validate(self, products) -> List[Dict[str, Any]]:
-        return products
-```
-
-Where `products` is received data from request
-
-2) Change handler in `settings.py`;
-
-```
-# settings.py
-
-GARPIX_CART_SESSION_HANDLER_CLASS = 'app.base.CustomHandler'
-```
-
-3) This work fine!
-
-
-#### The hard way to customize
-
-1) Create your class inherited from abstract;
-
-```
-# base.py
-
-from garpix_cart.abstracts import AbstractCartHandler
-
-
-class CustomHandler(AbstractCartHandler):
-    def validate(self, products) -> List[Dict[str, Any]]:
-        # method validates the data from the request
-        
-        ...
-
-    def is_valid(self, products) -> bool:
-        # check data is valid
-
-        ...
-    
-    def make(self, products) -> bool:
-        # make if data is valid
-        # always returns modify_session() from CartSession class
-    
-        ...
-
-    def error_log(self, products) -> Optional[str]:
-        # get errors if they raises
-    
-        ...
-``` 
-
-2) Change handler in `settings.py`;
-
-```
-# settings.py
-
-GARPIX_CART_SESSION_HANDLER_CLASS = 'app.base.CustomHandler'
-```
-
-3) This work fine!
-
-
-Developed by Garpix / [https://garpix.com](https://garpix.com)
+Далее нужно этот номер отправлять в каждый запрос с заголовок `Cart-Token`.
