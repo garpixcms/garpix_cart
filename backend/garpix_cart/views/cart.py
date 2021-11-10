@@ -1,4 +1,6 @@
 from typing import Optional
+
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import parsers
 from rest_framework import permissions
 from rest_framework import status
@@ -8,12 +10,28 @@ from rest_framework.response import Response
 
 from ..models import CartItem, Customer
 from ..permissions import IsCustomer
-from ..serializers import CartItemSerializer, CustomerSerializer
+from ..serializers import CartItemSerializer, CustomerSerializer, CartItemListSerializer
 
 
 class CartView(viewsets.ViewSet):
     parser_classes = (parsers.JSONParser,)
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.AllowAny,)
+    serializer_classes = {
+        'add': CartItemListSerializer,
+        'session_add': CartItemListSerializer
+    }
+    header_parameter = OpenApiParameter(
+        name=Customer.HEAD_NAME,
+        description='Customer',
+        required=True,
+        type=str,
+        location=OpenApiParameter.HEADER
+    )
+
+    default_serializer_class = CartItemSerializer
+
+    def get_serializer_class(self):
+        return self.serializer_classes.get(self.action, self.default_serializer_class)
 
     def get_customer(self) -> Optional[Customer]:
         return Customer.get_from_request(self.request)
@@ -39,6 +57,9 @@ class CartView(viewsets.ViewSet):
         customer = self.get_customer()
         CartItem.objects.filter(customer=customer, pk__in=data).delete()
 
+    @extend_schema(
+        parameters=[header_parameter]
+    )
     def list(self, request):
         return Response(CartItemSerializer(self.get_cartitems(), many=True).data)
 
@@ -48,6 +69,9 @@ class CartView(viewsets.ViewSet):
             'customer': CustomerSerializer(self.get_or_create_customer()).data
         }, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        parameters=[header_parameter]
+    )
     @action(detail=False, methods=['POST'], permission_classes=(IsCustomer,))
     def add(self, request):
         customer = self.get_customer()
@@ -64,6 +88,9 @@ class CartView(viewsets.ViewSet):
             {'server': 'Request "data" must be dict.'}, status=status.HTTP_400_BAD_REQUEST
         )
 
+    @extend_schema(
+        parameters=[header_parameter]
+    )
     @action(detail=False, methods=['DELETE'], permission_classes=(IsCustomer,))
     def remove(self, request):
         data = request.data.get('data')
@@ -72,12 +99,18 @@ class CartView(viewsets.ViewSet):
             'status': 'ok'
         }, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        parameters=[header_parameter]
+    )
     @action(detail=False, methods=['GET'], permission_classes=(permissions.AllowAny,))
     def session_list(self, request):
         return Response(
             self.get_cartitems(), status=status.HTTP_200_OK
         )
 
+    @extend_schema(
+        parameters=[header_parameter]
+    )
     @action(detail=False, methods=['DELETE'], permission_classes=(IsCustomer,))
     def session_remove(self, request):
         data = request.data.get('data')
@@ -86,6 +119,9 @@ class CartView(viewsets.ViewSet):
             'status': 'ok'
         }, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        parameters=[header_parameter]
+    )
     @action(detail=False, methods=['POST'], permission_classes=(permissions.AllowAny,))
     def session_add(self, request):
         customer = self.get_or_create_customer(session=True)
@@ -102,6 +138,9 @@ class CartView(viewsets.ViewSet):
             {'error': 'Data not valid'}, status=status.HTTP_400_BAD_REQUEST
         )
 
+    @extend_schema(
+        parameters=[header_parameter]
+    )
     def partial_update(self, request, pk=None):
         customer = self.get_customer()
 

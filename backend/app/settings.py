@@ -146,6 +146,7 @@ LANGUAGES = (
 GARPIX_CART_SESSION_KEY = 'cart'
 
 GARPIX_CART_MIXIN = 'garpix_cart.mixins.CartMixin'
+GARPIX_CART_SERIALIZER_MIXIN = 'garpix_cart.mixins.CartSerializerMixin'
 
 MIGRATION_MODULES = {
     'garpix_cart': 'app.migrations.garpix_cart',

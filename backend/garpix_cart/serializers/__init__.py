@@ -1,2 +1,2 @@
-from .cart import CartItemSerializer
+from .cart import CartItemSerializer, CartItemListSerializer
 from .customer import CustomerSerializer
