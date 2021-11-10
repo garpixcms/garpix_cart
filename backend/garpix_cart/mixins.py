@@ -1,4 +1,5 @@
 from django.db import models
+from rest_framework import serializers
 
 
 class CartMixin(models.Model):
@@ -6,3 +7,7 @@ class CartMixin(models.Model):
 
     class Meta:
         abstract = True
+
+
+class CartSerializerMixin(serializers.Serializer):
+    pass

@@ -13,7 +13,6 @@ class CartViewTestCase(TestCase):
         self.password = '12345'
         self.user = User.objects.create_user(username=self.username, password=self.password)
         self.customer = Customer.objects.create(user=self.user, recognized=Customer.CustomerState.REGISTERED)
-        CartItem.objects.create(customer=self.customer, count=1, params={}, product=10)
         self.user.save()
         client = APIClient()
         client.force_authenticate(user=self.user)
@@ -162,6 +161,7 @@ class CartViewTestCase(TestCase):
         self.assertNotEqual(response.data['customer']['number'], None)
 
     def test_get_list_cart(self):
+        CartItem.objects.create(customer=self.customer, count=1, params={}, product=10)
         response = self.client.get(
             '/api/v1/cart/',
             format='json',

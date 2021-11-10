@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 
 
 class Customer(models.Model):
+    HEAD_NAME = 'Cart-Token'
     class CustomerState(models.IntegerChoices):
         UNRECOGNIZED = (0, 'Неопознанный')
         GUEST = (1, 'Гость')
@@ -36,7 +37,7 @@ class Customer(models.Model):
         if user.is_authenticated:
             return Customer.objects.filter(user=user).first()
 
-        token = request.headers.get('Cart-Token', None)
+        token = request.headers.get(cls.HEAD_NAME, None)
         if token is not None:
             return Customer.objects.filter(number=token).first()
 
