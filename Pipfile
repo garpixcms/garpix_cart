@@ -11,6 +11,8 @@ psycopg2-binary = "*"
 celery = ">=4.4.2"
 garpix-qa = "*"
 garpix-package = "*"
+garpixcms = "==3.46.0"
+garpix-user = "==3.0.1"
 
 [dev-packages]
 

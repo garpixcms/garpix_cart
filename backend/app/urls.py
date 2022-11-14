@@ -1,19 +1,13 @@
-from django.urls import path, re_path, include
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
-from django.conf import settings
-from django.contrib import admin
+from garpixcms.urls import *  # noqa
+from garpix_user.views import LoginView, LogoutView
 
+urlpatterns = [
+                  # garpix_user
+                  path('', include(('garpix_user.urls', 'user'), namespace='garpix_user')),
+                  path('logout/', LogoutView.as_view(url='/'), name="logout"),
+                  path('login/', LoginView.as_view(template_name="accounts/login.html"), name="authorize"),
 
-urlpatterns = []
+                  # garpix_cart
+                  path('', include(('garpix_cart.urls', 'cart'), namespace='garpix_cart')),
+              ] + urlpatterns
 
-if settings.DEBUG:
-    urlpatterns += [
-        re_path(r'^api/v1/docs/schema/$', SpectacularAPIView.as_view(), name='schema'),
-        re_path(r'^api/v1/docs/$', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-        re_path(r'^api/v1/redoc/$', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-    ]
-
-urlpatterns += [
-    path('admin/', admin.site.urls),
-    path('api/v1/', include('garpix_cart.urls'))
-]
