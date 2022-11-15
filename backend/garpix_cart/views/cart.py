@@ -1,8 +1,7 @@
 from typing import Optional
 
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema
 from garpix_user.models import UserSession
-from garpix_user.serializers import UserSessionSerializer
 from garpix_user.utils.drf_spectacular import user_session_token_header_parameter
 from rest_framework import parsers
 from rest_framework import permissions
