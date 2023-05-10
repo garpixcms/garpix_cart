@@ -6,6 +6,7 @@ from ..models import CartItem
 
 CartItemMixin = import_string(settings.GARPIX_CART_SERIALIZER_MIXIN)
 
+
 class CartItemSerializer(ModelSerializer, CartItemMixin):
     class Meta:
         model = CartItem

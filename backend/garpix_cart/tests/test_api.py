@@ -1,9 +1,11 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.urls import reverse
+from garpix_user.models import UserSession
 
 from rest_framework.test import APIClient
 
-from ..models import CartItem, Customer
+from ..models import CartItem
 
 
 class CartViewTestCase(TestCase):
@@ -12,7 +14,7 @@ class CartViewTestCase(TestCase):
         self.username = 'testuser1'
         self.password = '12345'
         self.user = User.objects.create_user(username=self.username, password=self.password)
-        self.customer = Customer.objects.create(user=self.user, recognized=Customer.CustomerState.REGISTERED)
+        self.customer = UserSession.objects.create(user=self.user, recognized=UserSession.UserState.REGISTERED)
         self.user.save()
         client = APIClient()
         client.force_authenticate(user=self.user)
@@ -20,7 +22,7 @@ class CartViewTestCase(TestCase):
 
     def test_add(self):
         response = self.client.post(
-            '/api/v1/cart/add/',
+            reverse('garpix_cart:cart-add'),
             {
                 'data': [
                     {
@@ -42,7 +44,7 @@ class CartViewTestCase(TestCase):
 
     def test_session_add(self):
         response = self.client.post(
-            '/api/v1/cart/session_add/',
+            reverse('garpix_cart:cart-session-add'),
             {
                 'data': [
                     {
@@ -72,7 +74,7 @@ class CartViewTestCase(TestCase):
         cart_item.save()
 
         response = self.client.delete(
-            '/api/v1/cart/remove/',
+            reverse('garpix_cart:cart-remove'),
             {
                 'data': [
                     cart_item.pk
@@ -97,7 +99,7 @@ class CartViewTestCase(TestCase):
         cart_item.save()
 
         response = self.client.delete(
-            '/api/v1/cart/session_remove/',
+            reverse('garpix_cart:cart-session-remove'),
             {
                 'data': [
                     cart_item.pk
@@ -123,7 +125,7 @@ class CartViewTestCase(TestCase):
         cart_item.save()
 
         response = self.client.patch(
-            f'/api/v1/cart/{cart_item}/',
+            reverse('garpix_cart:cart-detail', args=[cart_item.pk]),
             {
                 'data': {
                     'count': product_count
@@ -138,32 +140,10 @@ class CartViewTestCase(TestCase):
         obj = CartItem.objects.get(pk=cart_item.pk)
         self.assertEqual(obj.count, product_count)
 
-    def test_create_customer_user(self):
-        response = self.client.post(
-            '/api/v1/cart/create_customer/',
-            format='json',
-            HTTP_ACCEPT='application/json',
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['customer']['user'], self.user.pk)
-
-    def test_create_customer_token(self):
-        client = APIClient()
-        response = client.post(
-            '/api/v1/cart/create_customer/',
-            format='json',
-            HTTP_ACCEPT='application/json',
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['customer']['user'], None)
-        self.assertNotEqual(response.data['customer']['number'], None)
-
     def test_get_list_cart(self):
         CartItem.objects.create(customer=self.customer, count=1, params={}, product=10)
         response = self.client.get(
-            '/api/v1/cart/',
+            reverse('garpix_cart:cart-list'),
             format='json',
             HTTP_ACCEPT='application/json',
         )

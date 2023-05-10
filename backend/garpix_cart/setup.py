@@ -9,7 +9,7 @@ with open(path.join(settings.BASE_DIR, '..', 'README.md'), encoding='utf-8') as 
 
 setup(
     name='garpix_cart',
-    version='2.2.0',
+    version='3.0.0',
     description='',
     long_description=long_description,
     url='https://github.com/garpixcms/garpix_cart',
@@ -30,7 +30,6 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'django >= 3.1',
-        'drf-spectacular >= 0.18.2',
+        'garpixcms >= 4.0.0'
     ],
 )

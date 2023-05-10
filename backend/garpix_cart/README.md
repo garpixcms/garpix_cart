@@ -72,11 +72,11 @@ Django явно не разрешает использование таких п
 
 # Changelog
 
-See [CHANGELOG.md](backend/garpix_cart/CHANGELOG.md).
+See [CHANGELOG.md](CHANGELOG.md).
 
 # Contributing
 
-See [CONTRIBUTING.md](backend/garpix_cart/CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 # License
 
@@ -85,3 +85,4 @@ See [CONTRIBUTING.md](backend/garpix_cart/CONTRIBUTING.md).
 ---
 
 Developed by Garpix / [https://garpix.com](https://garpix.com)
+

@@ -1,6 +1,8 @@
 from typing import Optional
 
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema
+from garpix_user.models import UserSession
+from garpix_user.utils.drf_spectacular import user_session_token_header_parameter
 from rest_framework import parsers
 from rest_framework import permissions
 from rest_framework import status
@@ -8,11 +10,16 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import CartItem, Customer
+from ..models import CartItem
 from ..permissions import IsCustomer
-from ..serializers import CartItemSerializer, CustomerSerializer, CartItemListSerializer
+from ..serializers import CartItemSerializer, CartItemListSerializer
 
 
+@extend_schema(
+    parameters=[
+        user_session_token_header_parameter()
+    ]
+)
 class CartView(viewsets.ViewSet):
     parser_classes = (parsers.JSONParser,)
     permission_classes = (permissions.AllowAny,)
@@ -20,24 +27,17 @@ class CartView(viewsets.ViewSet):
         'add': CartItemListSerializer,
         'session_add': CartItemListSerializer
     }
-    header_parameter = OpenApiParameter(
-        name=Customer.HEAD_NAME,
-        description='Customer',
-        required=True,
-        type=str,
-        location=OpenApiParameter.HEADER
-    )
 
     default_serializer_class = CartItemSerializer
 
     def get_serializer_class(self):
         return self.serializer_classes.get(self.action, self.default_serializer_class)
 
-    def get_customer(self) -> Optional[Customer]:
-        return Customer.get_from_request(self.request)
+    def get_customer(self) -> Optional[UserSession]:
+        return UserSession.get_from_request(self.request)
 
     def get_or_create_customer(self, session=False):
-        return Customer.get_or_create_customer(request=self.request, session=session)
+        return UserSession.get_or_create_user_session(request=self.request, session=session)
 
     def get_cartitems(self):
         customer = self.get_customer()
@@ -57,21 +57,9 @@ class CartView(viewsets.ViewSet):
         customer = self.get_customer()
         CartItem.objects.filter(customer=customer, pk__in=data).delete()
 
-    @extend_schema(
-        parameters=[header_parameter]
-    )
     def list(self, request):
         return Response(CartItemSerializer(self.get_cartitems(), many=True).data)
 
-    @action(detail=False, methods=['POST'], permission_classes=(permissions.AllowAny,))
-    def create_customer(self, request):
-        return Response({
-            'customer': CustomerSerializer(self.get_or_create_customer()).data
-        }, status=status.HTTP_200_OK)
-
-    @extend_schema(
-        parameters=[header_parameter]
-    )
     @action(detail=False, methods=['POST'], permission_classes=(IsCustomer,))
     def add(self, request):
         customer = self.get_customer()
@@ -88,9 +76,6 @@ class CartView(viewsets.ViewSet):
             {'server': 'Request "data" must be dict.'}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    @extend_schema(
-        parameters=[header_parameter]
-    )
     @action(detail=False, methods=['DELETE'], permission_classes=(IsCustomer,))
     def remove(self, request):
         data = request.data.get('data')
@@ -99,18 +84,12 @@ class CartView(viewsets.ViewSet):
             'status': 'ok'
         }, status=status.HTTP_200_OK)
 
-    @extend_schema(
-        parameters=[header_parameter]
-    )
     @action(detail=False, methods=['GET'], permission_classes=(permissions.AllowAny,))
     def session_list(self, request):
         return Response(
             self.get_cartitems(), status=status.HTTP_200_OK
         )
 
-    @extend_schema(
-        parameters=[header_parameter]
-    )
     @action(detail=False, methods=['DELETE'], permission_classes=(IsCustomer,))
     def session_remove(self, request):
         data = request.data.get('data')
@@ -119,9 +98,6 @@ class CartView(viewsets.ViewSet):
             'status': 'ok'
         }, status=status.HTTP_200_OK)
 
-    @extend_schema(
-        parameters=[header_parameter]
-    )
     @action(detail=False, methods=['POST'], permission_classes=(permissions.AllowAny,))
     def session_add(self, request):
         customer = self.get_or_create_customer(session=True)
@@ -138,9 +114,6 @@ class CartView(viewsets.ViewSet):
             {'error': 'Data not valid'}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    @extend_schema(
-        parameters=[header_parameter]
-    )
     def partial_update(self, request, pk=None):
         customer = self.get_customer()
 
