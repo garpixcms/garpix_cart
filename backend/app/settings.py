@@ -2,13 +2,11 @@ from garpixcms.settings import *  # noqa
 from garpix_user.settings import *  # noqa
 
 INSTALLED_APPS += [
-    'garpix_cart',
-    'garpix_user'
+    'garpix_cart'
 ]
 
 MIGRATION_MODULES.update({
-    'garpix_cart': 'app.migrations.garpix_cart',
-    'garpix_user': 'app.migrations.garpix_user'
+    'garpix_cart': 'app.migrations.garpix_cart'
 })
 
 GARPIX_USER = {
